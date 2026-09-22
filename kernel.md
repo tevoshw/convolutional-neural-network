@@ -60,6 +60,11 @@ Imagens
 - Pose estimation — detectar posição de articulações/corpo
 - Super-resolução — aumentar qualidade/resolução de imagem
 - Style transfer — aplicar estilo artístico numa imagem
+- Geração de imagens (GANs)
+- Colorização automática (P&B → cor)
+- Image-to-image translation (ex: mapa satélite → mapa rua)
+- Detecção de anomalias (defeitos em produtos, inspeção industrial)
+- Denoising (remoção de ruído)
 
 
 Audio
@@ -68,3 +73,4 @@ Audio
 - Reconhecimento de música/gênero
 - Detecção de palavra-chave — "Hey Siri", "OK Google"
 - Identificação de locutor (quem está falando)
+- Emotion recognition (detectar emoção na voz)
