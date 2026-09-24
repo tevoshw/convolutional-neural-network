@@ -1,4 +1,4 @@
-# Kernels
+# 1.Kernels
 
 
 **Kernels (or filters) are small weight matrices that slide over the data, detecting specific patterns.**
@@ -57,31 +57,87 @@ If we use **10 kernels** and the input data has **3 channels**:
 
 > Always after the kernels, we apply the activation function (normally ReLU) in the features maps
 
-# Stride
+----
 
 
-O quanto o kernel desliza pro lado e pra baixo
+# 2. Stride
+
+**Stride is how many positions the kernel jumps between each application — the "step size" of the sliding window.**
+
+- Stride = 1 → kernel moves 1 position at a time, windows overlap a lot, output stays close to input size.
+- Stride = 2 → kernel skips every other position, output shrinks (~half the size), less overlap, cheaper computation.
+
+Stride directly controls the output size:
+
+O = floor((I - K + 2P) / S) + 1
 
 
-# Padding
+Higher stride = smaller output, faster computation, but coarser spatial detail (intermediate positions get skipped entirely). Modern architectures (ResNet, etc.) often use stride-2 convolutions instead of pooling to downsample, since the stride's weights are learned rather than fixed.
 
-A borda da imagem para manter a qualidade
+---
+# 3. Padding
+
+**Padding adds extra border values (usually zeros) around the input before the convolution runs.**
+
+It solves two problems that stride doesn't:
+
+- **Shrinking output:** without padding, every conv layer reduces spatial size. Padding can keep output size equal to input size ("same" padding).
+- **Border underrepresentation:** without padding, corner/edge pixels get covered by far fewer kernel windows than center pixels. Padding balances this out.
+
+Common types:
+- **Valid** (P=0): no padding, output shrinks.
+- **Same**: padding chosen so output size = input size (with stride 1).
+- **Full**: maximum padding, output larger than input.
+
+For "same" padding with stride 1 and an odd kernel size:
+
+P = (K - 1) / 2
+
+---
+
+# 4. Pooling
+
+**Pooling reduces the spatial dimensions by summarizing each window into a single value — a "resume" of the pixels. No learned weights, no multiplication — just a fixed function applied over the window.**
+
+Same output formula as conv:
+
+O = floor((I - K + 2P) / S) + 1
 
 
-# Pooling
+Types:
 
-Redução dos pixels, em um 'resumo'
+- **Max** (`MaxPoolXd`) → takes the highest value in the window. Preserves the strongest activation, gives some translation invariance, most common in intermediate layers.
+- **Avg** (`AvgPoolXd`) → takes the mean of the window. Smoother, dilutes strong signals, used less often mid-network.
+- **Global** (`AdaptiveAvgPoolXd` / `AdaptiveMaxPoolXd` with output_size=1) → same idea as Max/Avg, but the "window" is the **entire** feature map, collapsing each channel to a single number. Used at the end of the network (replaces Flatten + Dense), works with any input size, drastically cuts parameters.
+
+Why it matters:
+1. Reduces computational cost
+2. Grows the receptive field faster
+3. Adds some invariance to small translations
+4. Reduces overfitting (fewer parameters downstream)
 
 
-# Flatten
+----
+# 5. Flatten and Dense
+
+**Flatten converts a multi-dimensional tensor `(batch, channels, H, W)` into a 1D vector per sample `(batch, features)`.**
+
+Conv/Pool layers work with spatial 4D tensors; `Linear` (Dense) layers expect flat 2D input. Flatten is the bridge between the two.
+
+(batch, 64, 7, 7) → flatten → (batch, 3136)
 
 
-Transforma imagem (matriz) em vetor
+Problem: if the feature map is still large before flattening, the resulting vector (and the first Linear layer after it) can have a huge number of parameters. This is exactly what Global Average Pooling avoids.
 
+**Dense (Fully Connected / `Linear`) layers connect every input value to every output neuron, each with its own learned weight — no weight sharing like in convolutions.**
 
-# Dense
+- Used at the end of the network, after Flatten or Global Pooling, to combine all extracted features into a final decision.
+- Output size = number of classes (or 1 for binary with BCE).
+- Unlike conv layers, Dense layers don't preserve spatial structure — they treat the input as one flat feature vector.
 
-Rede neural totalmente conectada
+nn.Linear(in_features, out_features)
+
+Logits from the final Dense layer are typically passed raw (no Softmax/Sigmoid) into `CrossEntropyLoss` or `BCEWithLogitsLoss`, since those already apply the activation internally.
 
 
 
